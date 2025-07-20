@@ -36,9 +36,11 @@ class UserMembershipEntity(
     val isActive: Boolean = true
 ) : BaseTimeEntity() {
 
-    fun canUseConversation(): Boolean = isActive && conversationUsed < membershipEntity.conversationLimit
+    fun canUseConversation(): Boolean = isActive && 
+        (membershipEntity.conversationLimit == -1 || conversationUsed < membershipEntity.conversationLimit)
 
-    fun canUseAnalysis(): Boolean = isActive && analysisUsed < membershipEntity.analysisLimit
+    fun canUseAnalysis(): Boolean = isActive && 
+        (membershipEntity.analysisLimit == -1 || analysisUsed < membershipEntity.analysisLimit)
 
     companion object {
         fun from(
@@ -56,27 +58,45 @@ class UserMembershipEntity(
             isActive = true
         )
 
-        fun updateConversationUsage(existing: UserMembershipEntity): UserMembershipEntity = UserMembershipEntity(
-            id = existing.id,
-            userEntity = existing.userEntity,
-            membershipEntity = existing.membershipEntity,
-            startDate = existing.startDate,
-            endDate = existing.endDate,
-            conversationUsed = existing.conversationUsed + 1,
-            analysisUsed = existing.analysisUsed,
-            isActive = existing.isActive
-        )
+        fun updateConversationUsage(existing: UserMembershipEntity): UserMembershipEntity {
+            // 무제한(-1)인 경우 사용 횟수를 증가시키지 않음
+            val newConversationUsed = if (existing.membershipEntity.conversationLimit == -1) {
+                existing.conversationUsed
+            } else {
+                existing.conversationUsed + 1
+            }
 
-        fun updateAnalysisUsage(existing: UserMembershipEntity): UserMembershipEntity = UserMembershipEntity(
-            id = existing.id,
-            userEntity = existing.userEntity,
-            membershipEntity = existing.membershipEntity,
-            startDate = existing.startDate,
-            endDate = existing.endDate,
-            conversationUsed = existing.conversationUsed,
-            analysisUsed = existing.analysisUsed + 1,
-            isActive = existing.isActive
-        )
+            return UserMembershipEntity(
+                id = existing.id,
+                userEntity = existing.userEntity,
+                membershipEntity = existing.membershipEntity,
+                startDate = existing.startDate,
+                endDate = existing.endDate,
+                conversationUsed = newConversationUsed,
+                analysisUsed = existing.analysisUsed,
+                isActive = existing.isActive
+            )
+        }
+
+        fun updateAnalysisUsage(existing: UserMembershipEntity): UserMembershipEntity {
+            // 무제한(-1)인 경우 사용 횟수를 증가시키지 않음
+            val newAnalysisUsed = if (existing.membershipEntity.analysisLimit == -1) {
+                existing.analysisUsed
+            } else {
+                existing.analysisUsed + 1
+            }
+
+            return UserMembershipEntity(
+                id = existing.id,
+                userEntity = existing.userEntity,
+                membershipEntity = existing.membershipEntity,
+                startDate = existing.startDate,
+                endDate = existing.endDate,
+                conversationUsed = existing.conversationUsed,
+                analysisUsed = newAnalysisUsed,
+                isActive = existing.isActive
+            )
+        }
 
         fun deactivate(existing: UserMembershipEntity): UserMembershipEntity = UserMembershipEntity(
             id = existing.id,
